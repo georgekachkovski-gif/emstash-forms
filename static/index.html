@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EMStash — Form 1 & 42 Wizard</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f5f4f1;
+    --surface: #ffffff;
+    --border: #dddbd5;
+    --border-focus: #1a1a1a;
+    --text: #1a1a1a;
+    --text-muted: #6b6963;
+    --text-hint: #9b9890;
+    --accent: #c8510a;
+    --accent-hover: #a84008;
+    --accent-light: #fdf0e8;
+    --accent-border: #f0c5a0;
+    --success: #1d6a3e;
+    --success-bg: #edf7f1;
+    --warning-bg: #fffbeb;
+    --warning-border: #f0d070;
+    --warning-text: #7a5c00;
+    --selected-bg: #eef4fd;
+    --selected-border: #2563eb;
+    --radius: 8px;
+    --radius-lg: 12px;
+  }
+
+  body {
+    font-family: 'Georgia', serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 0;
+  }
+
+  /* Nav */
+  nav {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    height: 56px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .nav-brand {
+    font-family: 'Georgia', serif;
+    font-size: 18px;
+    font-weight: bold;
+    color: var(--accent);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .nav-brand span { color: var(--text); }
+  .nav-tag {
+    font-size: 11px;
+    font-family: monospace;
+    background: var(--accent-light);
+    color: var(--accent);
+    border: 1px solid var(--accent-border);
+    border-radius: 4px;
+    padding: 2px 8px;
+  }
+
+  /* Layout */
+  .container {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
+  }
+
+  .page-title {
+    font-size: 26px;
+    font-weight: bold;
+    margin-bottom: 4px;
+    color: var(--text);
+  }
+  .page-sub {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin-bottom: 1.5rem;
+    font-family: sans-serif;
+  }
+
+  .warning-box {
+    background: var(--warning-bg);
+    border: 1px solid var(--warning-border);
+    border-radius: var(--radius);
+    padding: 12px 16px;
+    font-size: 13px;
+    color: var(--warning-text);
+    margin-bottom: 2rem;
+    font-family: sans-serif;
+    line-height: 1.5;
+  }
+
+  /* Sections */
+  .section { margin-bottom: 2rem; }
+  .section-label {
+    font-size: 11px;
+    font-family: sans-serif;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+  }
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 2rem 0;
+  }
+
+  /* Form controls */
+  label.field-label {
+    display: block;
+    font-size: 13px;
+    font-family: sans-serif;
+    font-weight: 500;
+    color: var(--text-muted);
+    margin-bottom: 5px;
+  }
+  select, input[type=date], input[type=time], textarea {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 14px;
+    font-family: sans-serif;
+    background: var(--surface);
+    color: var(--text);
+    transition: border-color 0.15s;
+    appearance: none;
+  }
+  select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b6963' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
+  select:focus, input:focus, textarea:focus { outline: none; border-color: var(--border-focus); }
+  textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
+  .field-hint { font-size: 11px; color: var(--text-hint); margin-top: 4px; font-family: sans-serif; font-style: italic; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+  /* Scenario cards */
+  .scenario-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .sc-card {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 14px 16px;
+    cursor: pointer;
+    background: var(--surface);
+    transition: border-color 0.15s, background 0.15s;
+    user-select: none;
+  }
+  .sc-card:hover { border-color: #aaa; }
+  .sc-card.active {
+    border: 2px solid var(--selected-border);
+    background: var(--selected-bg);
+  }
+  .sc-title {
+    font-size: 14px;
+    font-weight: bold;
+    font-family: sans-serif;
+    color: var(--text);
+    margin-bottom: 3px;
+  }
+  .sc-card.active .sc-title { color: var(--selected-border); }
+  .sc-desc { font-size: 12px; font-family: sans-serif; color: var(--text-muted); line-height: 1.4; }
+
+  /* Checks preview */
+  .checks-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 14px;
+  }
+  .checks-box {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    background: var(--surface);
+  }
+  .checks-title {
+    font-size: 10px;
+    font-family: sans-serif;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+  }
+  .check-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 6px;
+    font-size: 12px;
+    font-family: sans-serif;
+    color: var(--text);
+    line-height: 1.4;
+  }
+  .check-item input[type=checkbox] { margin-top: 2px; flex-shrink: 0; accent-color: var(--selected-border); }
+
+  /* Buttons */
+  .btn-row { display: flex; gap: 10px; margin-top: 2rem; align-items: center; }
+  .btn {
+    padding: 11px 22px;
+    border-radius: var(--radius);
+    font-size: 14px;
+    font-family: sans-serif;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    transition: background 0.15s;
+  }
+  .btn:hover { background: var(--bg); }
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+  }
+  .btn-primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+  .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+
+  /* Status */
+  .status {
+    font-size: 13px;
+    font-family: sans-serif;
+    color: var(--text-muted);
+    margin-left: 4px;
+    display: none;
+  }
+  .status.show { display: inline; }
+  .status.error { color: #c0392b; }
+  .status.success { color: var(--success); }
+
+  /* PDF viewer */
+  #pdf-area {
+    display: none;
+    margin-top: 2rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    background: var(--surface);
+  }
+  .pdf-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg);
+  }
+  .pdf-toolbar span { font-size: 13px; font-family: sans-serif; color: var(--text-muted); }
+  #pdf-frame {
+    width: 100%;
+    height: 780px;
+    border: none;
+    display: block;
+  }
+
+  @media (max-width: 600px) {
+    .scenario-grid, .checks-grid, .row2 { grid-template-columns: 1fr; }
+    .pdf-toolbar { flex-wrap: wrap; }
+    #pdf-frame { height: 500px; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-brand" href="#">⚕ <span>EMStash</span></a>
+  <span class="nav-tag">Form 1 &amp; 42 Wizard</span>
+</nav>
+
+<div class="container">
+  <h1 class="page-title">Form 1 &amp; 42 Generator</h1>
+  <p class="page-sub">Fills the official Ontario Mental Health Act forms. Clinical judgment and legal responsibility remain with the physician.</p>
+
+  <div class="warning-box">
+    ⚠️ <strong>Do not enter identifiable information.</strong> Use general clinical descriptions only — no patient names, DOB, MRN, addresses, or exact dates. Physician name and patient details are left blank for handwriting.
+  </div>
+
+  <!-- Hospital + Date/Time -->
+  <div class="section">
+    <div class="section-label">Examination details</div>
+    <div style="margin-bottom:14px">
+      <label class="field-label" for="hosp">Hospital</label>
+      <select id="hosp">
+        <option value="">— Select hospital —</option>
+        <option value="St Michael's Hospital|30 Bond St, Toronto, ON M5B 1W8|(416) 360-4000">St Michael's Hospital</option>
+        <option value="Toronto Western Hospital|399 Bathurst St, Toronto, ON M5T 2S8|(416) 603-2581">Toronto Western Hospital</option>
+        <option value="Toronto General Hospital|200 Elizabeth St, Toronto, ON M5G 2C4|(416) 340-3111">Toronto General Hospital</option>
+        <option value="Mt. Sinai|600 University Ave, Toronto, ON M5G 1X5|(416) 596-4200">Mt. Sinai</option>
+        <option value="CAMH|1051 Queen St W, Toronto, ON M6J 1H3|+1 800-463-2338">CAMH</option>
+        <option value="North York General Hospital|4001 Leslie St, North York, ON M2K 1E1|(416) 756-6000">North York General Hospital</option>
+        <option value="Michael Garron Hospital|825 Coxwell Ave, East York, ON M4C 3E7|(416) 461-8272">Michael Garron Hospital</option>
+        <option value="St. Joseph's Health Centre|30 The Queensway, Toronto, ON M6R 1B5|(416) 530-6000">St. Joseph's Health Centre</option>
+        <option value="The Hospital for Sick Children|170 Elizabeth St, Toronto, ON M5G 1E8|(416) 813-1500">The Hospital for Sick Children</option>
+        <option value="Humber River Hospital|1235 Wilson Ave, North York, ON M3M 0B2|(416) 242-1000">Humber River Hospital</option>
+        <option value="Sunnybrook Health Sciences Centre|2075 Bayview Ave, Toronto, ON M4N 3M5|(416) 480-6100">Sunnybrook Health Sciences Centre</option>
+      </select>
+    </div>
+    <div class="row2">
+      <div>
+        <label class="field-label" for="examdate">Date of examination</label>
+        <input type="date" id="examdate">
+      </div>
+      <div>
+        <label class="field-label" for="examtime">Time of examination</label>
+        <input type="time" id="examtime">
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- Scenario picker -->
+  <div class="section">
+    <div class="section-label">Clinical scenario — select best match</div>
+    <div class="scenario-grid">
+      <div class="sc-card" data-s="si" onclick="pickScenario(this)">
+        <div class="sc-title">Suicidal ideation / SI</div>
+        <div class="sc-desc">Expressing intent or plan, no act yet</div>
+      </div>
+      <div class="sc-card" data-s="attempt" onclick="pickScenario(this)">
+        <div class="sc-title">Suicide attempt / self-harm act</div>
+        <div class="sc-desc">Overdose, cutting — an act has occurred</div>
+      </div>
+      <div class="sc-card" data-s="violent" onclick="pickScenario(this)">
+        <div class="sc-title">Violent / aggressive behaviour</div>
+        <div class="sc-desc">Hitting, throwing objects, threatening others</div>
+      </div>
+      <div class="sc-card" data-s="psychosis" onclick="pickScenario(this)">
+        <div class="sc-title">Psychosis / unable to care for self</div>
+        <div class="sc-desc">Disorganized, not eating, responding to stimuli</div>
+      </div>
+      <div class="sc-card" data-s="concern" onclick="pickScenario(this)">
+        <div class="sc-title">Family / police concern — threat to others</div>
+        <div class="sc-desc">EMS/police brought in, others fearful of patient</div>
+      </div>
+      <div class="sc-card" data-s="neglect" onclick="pickScenario(this)">
+        <div class="sc-title">Overdose / medical self-neglect</div>
+        <div class="sc-desc">Unable to care for self, impaired judgment</div>
+      </div>
+    </div>
+
+    <div class="checks-grid" id="checks-grid" style="display:none">
+      <div class="checks-box">
+        <div class="checks-title">Past / present test — auto-selected</div>
+        <div class="check-item"><input type="checkbox" id="pp1"><label for="pp1">Threatened / threatening bodily harm to self</label></div>
+        <div class="check-item"><input type="checkbox" id="pp2"><label for="pp2">Attempted / attempting bodily harm to self</label></div>
+        <div class="check-item"><input type="checkbox" id="pp3"><label for="pp3">Behaved / behaving violently toward another</label></div>
+        <div class="check-item"><input type="checkbox" id="pp4"><label for="pp4">Causing another person to fear bodily harm</label></div>
+        <div class="check-item"><input type="checkbox" id="pp5"><label for="pp5">Lack of competence to care for self</label></div>
+      </div>
+      <div class="checks-box">
+        <div class="checks-title">Future test — auto-selected</div>
+        <div class="check-item"><input type="checkbox" id="ft1"><label for="ft1">Serious bodily harm to self</label></div>
+        <div class="check-item"><input type="checkbox" id="ft2"><label for="ft2">Serious bodily harm to another person</label></div>
+        <div class="check-item"><input type="checkbox" id="ft3"><label for="ft3">Serious physical impairment of self</label></div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- Observation text fields -->
+  <div class="section">
+    <div class="section-label">Clinical observations</div>
+    <div style="margin-bottom:14px">
+      <label class="field-label" for="hpi">My own observations — HPI (Past / Present test)</label>
+      <textarea id="hpi" placeholder='e.g. "Observed shouting and pacing in hallway; patient stated he has a plan to overdose tonight"'></textarea>
+      <p class="field-hint">Your direct observations of past or present behaviour.</p>
+    </div>
+    <div style="margin-bottom:14px">
+      <label class="field-label" for="psychhx">Facts communicated to me by others — psych hx (Past / Present test)</label>
+      <textarea id="psychhx" placeholder='e.g. "History of schizophrenia; prior admission for suicide attempt documented in chart"'></textarea>
+      <p class="field-hint">Collateral or chart history supporting the past/present test.</p>
+    </div>
+    <div style="margin-bottom:14px">
+      <label class="field-label" for="mse">My own observations — MSE (Future test)</label>
+      <textarea id="mse" placeholder='e.g. "Reports auditory hallucinations; appears to respond to internal stimuli; expresses suicidal thoughts"'></textarea>
+      <p class="field-hint">Mental status exam findings supporting the future test.</p>
+    </div>
+    <div>
+      <label class="field-label" for="collateral">Facts communicated by others — collateral (Future test)</label>
+      <textarea id="collateral" placeholder='e.g. "Family reports recent self-harm behaviour; patient has not eaten in 3 days"'></textarea>
+      <p class="field-hint">Collateral information supporting the future test.</p>
+    </div>
+  </div>
+
+  <!-- Action buttons -->
+  <div class="btn-row">
+    <button class="btn btn-primary" id="gen-btn" onclick="generate()">Generate Form 1 + Form 42 →</button>
+    <button class="btn" onclick="clearAll()">Clear</button>
+    <span class="status" id="status"></span>
+  </div>
+
+  <!-- PDF area -->
+  <div id="pdf-area">
+    <div class="pdf-toolbar">
+      <strong style="font-family:sans-serif;font-size:14px">Form 1 + Form 42 — Official Ontario PDF</strong>
+      <span>Ready to print</span>
+      <button class="btn btn-primary" style="padding:7px 16px;font-size:13px" onclick="printPDF()">Print / Save as PDF</button>
+      <button class="btn" style="padding:7px 16px;font-size:13px" id="dl-btn">Download</button>
+    </div>
+    <iframe id="pdf-frame" title="Filled Form 1 and Form 42"></iframe>
+  </div>
+</div>
+
+<script>
+const SCENARIOS = {
+  si:       { pp:[1,0,0,0,0], ft:[1,0,0] },
+  attempt:  { pp:[0,1,0,0,0], ft:[1,0,0] },
+  violent:  { pp:[0,0,1,1,0], ft:[0,1,0] },
+  psychosis:{ pp:[0,0,0,0,1], ft:[0,0,1] },
+  concern:  { pp:[0,0,0,1,0], ft:[0,1,0] },
+  neglect:  { pp:[0,1,0,0,1], ft:[1,0,1] },
+};
+
+function pickScenario(el) {
+  document.querySelectorAll('.sc-card').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  const s = SCENARIOS[el.dataset.s];
+  document.getElementById('checks-grid').style.display = 'grid';
+  ['pp1','pp2','pp3','pp4','pp5'].forEach((id,i) => document.getElementById(id).checked = !!s.pp[i]);
+  ['ft1','ft2','ft3'].forEach((id,i)       => document.getElementById(id).checked = !!s.ft[i]);
+}
+
+function fmtDate(d) {
+  if (!d) return '';
+  const [y,m,day] = d.split('-');
+  return `${day}/${m}/${y}`;
+}
+function fmtTime(t) {
+  if (!t) return '';
+  const [h, min] = t.split(':');
+  const ampm = +h >= 12 ? 'PM' : 'AM';
+  return `${+h % 12 || 12}:${min} ${ampm}`;
+}
+
+function setStatus(msg, type) {
+  const el = document.getElementById('status');
+  el.textContent = msg;
+  el.className = 'status show ' + (type || '');
+}
+
+let currentBlobUrl = null;
+
+async function generate() {
+  const hosp = document.getElementById('hosp').value;
+  if (!hosp) { setStatus('Please select a hospital.', 'error'); return; }
+  const examdate = document.getElementById('examdate').value;
+  if (!examdate) { setStatus('Please enter the date of examination.', 'error'); return; }
+
+  const [hospName, hospAddr, hospPhone] = hosp.split('|');
+  const payload = {
+    hosp_addr:  hospAddr,
+    hosp_phone: hospPhone,
+    exam_date:  fmtDate(examdate),
+    exam_time:  fmtTime(document.getElementById('examtime').value),
+    hpi:        document.getElementById('hpi').value,
+    psychhx:    document.getElementById('psychhx').value,
+    mse:        document.getElementById('mse').value,
+    collateral: document.getElementById('collateral').value,
+    pp1: document.getElementById('pp1').checked,
+    pp2: document.getElementById('pp2').checked,
+    pp3: document.getElementById('pp3').checked,
+    pp4: document.getElementById('pp4').checked,
+    pp5: document.getElementById('pp5').checked,
+    ft1: document.getElementById('ft1').checked,
+    ft2: document.getElementById('ft2').checked,
+    ft3: document.getElementById('ft3').checked,
+  };
+
+  const btn = document.getElementById('gen-btn');
+  btn.disabled = true;
+  setStatus('Generating…', '');
+
+  try {
+    const res = await fetch('/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || 'Server error');
+    }
+    const blob = await res.blob();
+    if (currentBlobUrl) URL.revokeObjectURL(currentBlobUrl);
+    currentBlobUrl = URL.createObjectURL(blob);
+
+    const frame = document.getElementById('pdf-frame');
+    frame.src = currentBlobUrl;
+
+    const dlBtn = document.getElementById('dl-btn');
+    dlBtn.onclick = () => {
+      const a = document.createElement('a');
+      a.href = currentBlobUrl;
+      a.download = `Form1_Form42_${fmtDate(examdate).replace(/\//g,'-')}.pdf`;
+      a.click();
+    };
+
+    document.getElementById('pdf-area').style.display = 'block';
+    document.getElementById('pdf-area').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setStatus('✓ Done — scroll down to print or download.', 'success');
+  } catch(e) {
+    setStatus('Error: ' + e.message, 'error');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function printPDF() {
+  document.getElementById('pdf-frame').contentWindow.print();
+}
+
+function clearAll() {
+  document.querySelectorAll('.sc-card').forEach(c => c.classList.remove('active'));
+  document.getElementById('checks-grid').style.display = 'none';
+  ['pp1','pp2','pp3','pp4','pp5','ft1','ft2','ft3'].forEach(id => document.getElementById(id).checked = false);
+  ['hpi','psychhx','mse','collateral'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('hosp').value = '';
+  document.getElementById('examdate').value = '';
+  document.getElementById('examtime').value = '';
+  document.getElementById('pdf-area').style.display = 'none';
+  document.getElementById('status').className = 'status';
+}
+</script>
+</body>
+</html>
