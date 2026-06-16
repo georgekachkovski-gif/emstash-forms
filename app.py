@@ -57,14 +57,40 @@ def check_anon_by_y(writer, y_min, y_max, page_idx, check=True):
                 val = NameObject("/On" if check else "/Off")
                 annot.update({NameObject("/V"): val, NameObject("/AS"): val})
 
+def set_anon_text_by_rect(writer, x_min, x_max, y_min, y_max, page_idx, value):
+    """Set a text value into an anonymous (un-named) text field located by its rect box."""
+    page = writer.pages[page_idx]
+    if "/Annots" not in page:
+        return
+    for ref in page["/Annots"]:
+        annot = ref.get_object()
+        fid = annot.get("/T", "")
+        if isinstance(fid, bytes):
+            fid = fid.decode("utf-8", errors="ignore")
+        rect = annot.get("/Rect", [])
+        if not fid and len(rect) == 4:
+            x = float(rect[0])
+            y = float(rect[1])
+            if x_min <= x <= x_max and y_min <= y <= y_max:
+                annot.update({NameObject("/V"): create_string_object(value)})
+                if "/AP" in annot:
+                    del annot["/AP"]
+
 def fill_form1(data):
     reader = PdfReader(os.path.join(BASE, "form1_original.pdf"))
     writer = PdfWriter()
     writer.append(reader)
     writer.set_need_appearances_writer(True)
+
+    # Split phone like "(416) 360-4000" into area code "416" and rest "360-4000"
+    phone_raw = data["hosp_phone"].replace("(", "").replace(")", "")
+    parts = phone_raw.split(None, 1)  # split on first whitespace
+    area_code = parts[0] if parts else ""
+    rest = parts[1] if len(parts) > 1 else ""
+
     set_fields(writer, {
         "2":  data["hosp_addr"],
-        "3":  data["hosp_phone"],
+        "3":  area_code,
         "10": "/Yes" if data["pp1"] else "/Off",
         "12": "/On3" if data["pp3"] else "/Off",
         "13": "/Yes" if data["pp4"] else "/Off",
@@ -77,6 +103,13 @@ def fill_form1(data):
         "37": data["exam_date"],
         "38": data["exam_time"],
     })
+
+    # Telephone number continuation field is anonymous (no /T) — target by rect
+    set_anon_text_by_rect(writer, x_min=220, x_max=232, y_min=620, y_max=645, page_idx=0, value=rest)
+
+    # "On ___" exam date field is also anonymous — target by rect
+    set_anon_text_by_rect(writer, x_min=100, x_max=260, y_min=590, y_max=610, page_idx=0, value=data["exam_date"])
+
     if data["pp2"]:
         check_anon_by_y(writer, 370, 398, page_idx=0, check=True)
     buf = io.BytesIO()
