@@ -159,6 +159,9 @@ def index():
 def generate():
     try:
         data = request.get_json()
+        print("=== INCOMING PAYLOAD ===")
+        print(json.dumps(data, indent=2))
+        print("========================")
         # coerce booleans
         for k in ["pp1","pp2","pp3","pp4","pp5","ft1","ft2","ft3"]:
             data[k] = bool(data.get(k, False))
@@ -171,6 +174,8 @@ def generate():
                          as_attachment=False,
                          download_name=filename)
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
